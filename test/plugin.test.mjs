@@ -8,7 +8,7 @@ const reply = { choices: [{ finish_reason: "stop", message: { role: "assistant",
 
 function context(options = {}, extra = {}) {
   return {
-    origin: "local", protocol: "chat", agent: "Hermes Agent", session: "test-session", success: true,
+    origin: "local", protocol: "chat", agent: "Claude Code", session: "test-session", success: true,
     options, state: {}, reports: [],
     report(code, bytes) { this.reports.push({ code, bytes }); },
     ...extra
@@ -82,7 +82,7 @@ test("capture opt-in retains the current turn asynchronously to the same hermes 
   assert.match(item.content, /What is the codeword\?/);
   assert.match(item.content, /synthetic answer/);
   assert.match(item.document_id, /^magpie-[a-f0-9]{64}$/);
-  assert.deepEqual(item.metadata, { source: "magpie-hindsight", agent: "Hermes Agent", protocol: "chat" });
+  assert.deepEqual(item.metadata, { source: "magpie-hindsight", agent: "Claude Code", protocol: "chat" });
   assert.ok(ctx.reports.some(r => r.code === "captured"));
 });
 

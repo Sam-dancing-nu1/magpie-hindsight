@@ -14,6 +14,18 @@ test("defaults match the public contract", () => {
   assert.equal(agentAllowed(config, undefined), true);
 });
 
+test("agents with native injection are skipped by default, can be force-enabled", () => {
+  const open = configuration();
+  assert.equal(agentAllowed(open, "claude"), true);
+  assert.equal(agentAllowed(open, "Hermes Agent"), false);
+  assert.equal(agentAllowed(open, "hermes"), false);
+  assert.equal(agentAllowed(open, "DSH"), false);
+  assert.equal(agentAllowed(open, "DeepSeek Harness"), false);
+  const forced = configuration({ agents: ["hermes"] });
+  assert.equal(agentAllowed(forced, "Hermes"), true);
+  assert.equal(agentAllowed(forced, "dsh"), false);
+});
+
 test("overrides are normalized without changing the bank id", () => {
   const config = configuration({
     hindsight_api: "http://localhost:8888/",

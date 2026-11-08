@@ -20,7 +20,7 @@ Agent client ──► Magpie + magpie-hindsight ──► model provider
 
 Hindsight's official **Agent Plugins and tool integrations** run inside a specific agent and expose operations such as `recall_memory` and `retain_memory` as **explicit tools** for that agent to call. This Magpie plugin works at a different layer: Magpie automatically recalls before inference, without adding tools or changing each client. Optional capture also happens at the gateway.
 
-Use one memory-injection path at a time. Running this plugin together with an agent-side automatic Hindsight integration can inject or capture the same conversation twice.
+Use one memory-injection path at a time. Hermes Agent and DeepSeek Harness already have native automatic Hindsight injection, so this plugin **skips them by default** even with an empty `agents` list — memory is never injected twice. Name them in `agents` to force-enable, or set an allow-list of agents that have no native integration.
 
 ### Requirements
 
@@ -61,15 +61,21 @@ magpie plugin options magpie-hindsight '{
 | `bank` | `hermes` | Existing Hindsight bank ID used for both recall and capture. The default reuses `hermes`; no dedicated plugin bank is needed. Multi-bank users can select another existing bank. |
 | `recall_max_tokens` | `1024` | Token budget sent to Hindsight recall (`max_tokens`). Integer from 1 to 16384. |
 | `capture` | `false` | Opt in to retaining the completed current turn. |
-| `agents` | `[]` | Case-insensitive exact `ctx.agent` names to process. An empty list means all agents. |
+| `agents` | `[]` | Case-insensitive exact `ctx.agent` names to process. Empty = all agents **except** Hermes Agent / DeepSeek Harness, which are skipped by default because they already inject Hindsight natively. |
 | `gatewayTimeoutMs` | `1000` host default; `5000` recommended | Magpie's timeout for this hook (100–10000 ms). The plugin finishes its recall 200 ms earlier to fail open cleanly. |
 
 `gatewayTimeoutMs` is a **Magpie host option**, not a Hindsight server setting. A 1000 ms host budget is often too short for recall from a populated bank. Save the recommended 5000 ms value as shown above; clearing all options also restores the host's 1000 ms default.
 
-Example: process only two named agents while explicitly reusing the existing `hermes` bank:
+Example: enable only agents without native injection, reusing the existing `hermes` bank:
 
 ```sh
-magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["Hermes Agent","DSH"]}'
+magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["claude","codex","opencode"]}'
+```
+
+To force-enable an agent that has native injection (not recommended unless the native side is disabled):
+
+```sh
+magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["Hermes Agent"]}'
 ```
 
 Restore runtime defaults:
@@ -120,7 +126,7 @@ This project was developed with AI assistance, including implementation, tests, 
 
 ### License
 
-[Apache-2.0](LICENSE).
+[Apache-2.0](LICENSE) · © 2024-2026 Sam-Dancing™
 
 ---
 
@@ -142,7 +148,7 @@ Agent 客户端 ──► Magpie + magpie-hindsight ──► 模型提供方
 
 Hindsight 官方 **Agent Plugins 和工具集成**位于具体 Agent 内，通常把 `recall_memory`、`retain_memory` 等操作暴露为**显式工具调用**。本插件位于网关层：Magpie 在推理前自动召回，不需要给客户端增加工具，也不要求每个 Agent 单独接入；可选采集同样发生在网关层。
 
-建议同一时间只使用一条自动记忆注入链路。本插件与 Agent 侧的自动 Hindsight 集成同时开启，可能重复注入或重复采集。
+同一时间只走一条记忆注入链路。Hermes Agent 和 DeepSeek Harness 自带 Hindsight 自动注入，所以本插件**默认跳过它们**——即使 `agents` 为空也不会重复注入。想强制开启就把它们写进 `agents`，或者只给没有原生集成的 Agent 配白名单。
 
 ### 环境要求
 
@@ -183,15 +189,21 @@ magpie plugin options magpie-hindsight '{
 | `bank` | `hermes` | recall 和 capture 共用的现有 Hindsight bank ID。默认直接复用 `hermes`，无需插件专用 bank；多 bank 用户可选择另一个现有 bank。 |
 | `recall_max_tokens` | `1024` | 发送给 Hindsight recall 的 `max_tokens` 预算，范围 1–16384。 |
 | `capture` | `false` | 显式开启后才 retain 完整结束的当前轮次。 |
-| `agents` | `[]` | 要处理的 `ctx.agent` 名称，大小写不敏感精确匹配；空数组表示全部 Agent。 |
+| `agents` | `[]` | 要处理的 `ctx.agent` 名称，大小写不敏感精确匹配；空数组 = 全部 Agent，**但默认跳过**已有原生注入的 Hermes Agent / DeepSeek Harness。 |
 | `gatewayTimeoutMs` | 宿主默认 `1000`；建议 `5000` | Magpie 给本 hook 的超时时间（100–10000ms）。插件会提前 200ms 结束自身 recall，以便干净地失败放行。 |
 
 `gatewayTimeoutMs` 是 **Magpie 宿主选项**，不是 Hindsight 服务端配置。已有大量记忆的 bank 召回常超过 1000ms，因此建议按上例显式保存 5000ms；清空全部选项也会恢复宿主的 1000ms 默认值。
 
-只处理指定 Agent，并显式复用现有 `hermes` bank：
+示例：只给没有原生注入的 Agent 开启，复用现有 `hermes` 库：
 
 ```sh
-magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["Hermes Agent","DSH"]}'
+magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["claude","codex","opencode"]}'
+```
+
+要强制覆盖某个自带注入的 Agent（不推荐，除非原生侧已关）：
+
+```sh
+magpie plugin options magpie-hindsight '{"bank":"hermes","agents":["Hermes Agent"]}'
 ```
 
 清除已保存配置并恢复运行时默认值：
@@ -242,4 +254,4 @@ npm run check
 
 ### 许可证
 
-[Apache-2.0](LICENSE)。
+[Apache-2.0](LICENSE) · © 2024-2026 Sam-Dancing™
